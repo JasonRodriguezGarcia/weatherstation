@@ -1,0 +1,38 @@
+Proyecto para la monitorización de temperatura y humedad ambiental. Los datos se guardarán en una base de datos
+de Pouch.db, que por ahora guardarán los siguientes campos en cada registro:
+{
+    "temperature": 15.5,
+    "humidity": 68,
+    "dateTime": "2025-04-20" <---NO HACE FALTA, EL ORDENADOR YA LO CREA EL SOLO ANTES DE GUARDAR EL REGISTRO
+}
+
+Material inicial
+- Modulo compatible ES8266 (otros valen igual)
+- Sensor DHT11
+- Red Wifi
+- Pc para el servidor express que recibirá las peticiones get con los datos
+- 3 cables para conectar el DHT11 al módulo y un cable usb para alimentar el módulo una vez programado.
+
+Fuente de información:
+https://www.youtube.com/watch?v=5NkyvyodCLE&ab_channel=LosProfesparavos
+
+Servidor express:
+- index.js
+    Recibe las peticiones del módulo ES8266
+Los datos de ejemplo registrados en varios ficheros comprimidos con extensión .rar:
+- data1.rar
+
+Fichero para programar con Arduino IDE (algo así como el Visual Studio Code de Arduino, pero con muchas mas funciones)
+- /weather/weather.ino
+    Versión inicial que funciona sin problemas
+    Programar el módulo ES8266 con las librerías y configuraciones que están en el propio fichero .ino
+    El Data del DHT11 estará en el pin 2
+
+- /weather2/weather2.ino
+    Versión con display led 1602 de 16x2 caracteres y módulo I2C (opcional)
+    Versión con sensor DHT22 que es mejor que el DHT11
+
+- /weather3/weather3.ino
+    Versión que permite conectar varios sensores localizados en distintas hubicaciones y enviando
+    información con su propio ID para diferenciarse unos de otros.
+    Pending probar con varios sensores.
