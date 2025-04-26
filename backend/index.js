@@ -30,6 +30,7 @@ app.use(cors()); // para tener acceso desde React, ya que React y Express no est
 app.use(express.json());
 // app.use('/api/v1/meassures', usersRouters)
 
+// At the beginning, remove all devices if any
 const removeDevices = async () => {
     try {
         const selector = {
@@ -54,6 +55,69 @@ const removeDevices = async () => {
 }
 removeDevices()
 
+// setting initial state with devices
+let devicesPrevious = []
+// let firstTimeDevices = true
+setInterval(async () => {
+    // console.log("**************************")
+    // console.log("imprimo devicesPrevious: ", devicesPrevious)
+    const unicos = [...new Set(devicesPrevious)];
+    // console.log("imprimo unicos: ", unicos)
+    // console.log("**************************")
+    // devicesPrevious = []
+    // return
+
+    const devicesTMP = []
+    // console.log("Valor devicesPrevious al entrar al setInterval: ", devicesPrevious)
+    // check actual devices with previous ones
+    // getting devices
+    const selector = {
+        type: "devices"
+    }
+    // Paso 1: Buscar todos los "devices"
+    const result = await db.find({
+        selector,
+        fields: ['_id', '_rev', 'deviceMAC'], // OJO añadir SIEMPRE _id y _rev si no, no actualiza
+        // limit: 10
+    })
+    // console.log("imprimo result.docs.length: ", result.docs.length)
+    if (result.docs.length == 0) {
+        // firstTimeDevices = true
+        devicesPrevious = []
+        return
+    }
+    // if (firstTimeDevices) {
+    //     devicesPrevious = [...result.docs]
+    //     firstTimeDevices = false
+    //     return
+    // }
+
+    for (let doc of result.docs) {
+        const previousMACS = devicesPrevious.map(d => d.deviceMAC)
+        let founded = previousMACS.includes(doc.deviceMAC)
+        // console.log("founded: ", founded)
+        if (founded) {
+            console.log("encontrado!!")
+            // se añade a devicesTMP
+            devicesTMP.push(doc)
+        }
+        else {
+            console.log("NO encontrado")
+            // se borra (no pasamos de largo)
+            await db.remove(doc._id, doc._rev); // Borramos el documento usando _id y _rev
+        }
+    }
+    // se borran todos los devices
+    // removeDevices()
+    // se crean todos los devices de devicesTMP
+
+
+    // se asigna a devicesPrevious el valor de devicesTMP
+    devicesPrevious = [...devicesTMP]
+    // console.log("devicesTMP al salir del For: ", devicesTMP)
+
+}, 15000);
+
 // *************************
 // *************************
 // devices start
@@ -64,9 +128,6 @@ app.get('/api/v1/devices', async (req, res) => {
         const result = await db.allDocs({ include_docs: true });
         // console.log(result);
   
-        // Extract meassure data from the documents
-        // const meassure = result.rows.map(row => row.doc);
-
         // Filter the meassure if 'type' is used in the document
         const devices = result.rows
             .filter(row => row.doc.type === 'devices')  // Ensure the document type is 'meassure'
@@ -122,7 +183,7 @@ app.get('/api/v1/meassures', async (req, res) => {
             .filter(row => row.doc.type === 'tempHum')  // Ensure the document type is 'meassure'
             .map(row => row.doc);  // Map to get the document content
 
-        console.log(meassures)
+        // console.log(meassures)
  
         // Send the meassure as JSON response
         // res.json(meassures);
@@ -139,8 +200,7 @@ app.post('/api/v1/meassures', async (req, res) => {
         meassure.date = new Date().toLocaleString("es-ES", { timeZone: "Europe/Madrid" });
 
         const {device_id, temperature, humidity} = req.body;
-        console.log("objeto: ", meassure)
-
+        // console.log("objeto: ", meassure)
         
         // Insert new meassure into the database
         const response = await db.post(meassure);
@@ -151,7 +211,6 @@ app.post('/api/v1/meassures', async (req, res) => {
             $and: [
                 {type: "devices"},
                 {deviceMAC: device_id}
-
             ]
         }
         const deviceExist = await db.find({
@@ -159,9 +218,10 @@ app.post('/api/v1/meassures', async (req, res) => {
             fields: ['_id', '_rev', 'deviceMAC', 'temperature', 'humidity'], // OJO añadir SIEMPRE _id y _rev si no, no actualiza
             // limit: 10
         })
-        console.log("imprimo deviceExist: ", deviceExist)
+        // console.log("imprimo deviceExist: ", deviceExist)
+        // Either if exist or not one device, it will be updated/created with last temp. and humid. registry
         if (deviceExist.docs.length !== 0){
-            // if exist update temp and humid
+            // if device exist, update temp and humid with last registry
             console.log("EXISTE")
             const existingDevice = deviceExist.docs[0];
             const updatedDevice = {
@@ -173,10 +233,10 @@ app.post('/api/v1/meassures', async (req, res) => {
                 humidity
             };
             await db.put(updatedDevice);
-            console.log("Dispositivo actualizado: ", updatedDevice);
+            // console.log("Dispositivo actualizado: ", updatedDevice.deviceMAC);
             
         } else {
-            // if not exist create with update temp and humid
+            // if not exist, a new deviced is created with temp. and humid.
             console.log("NO EXISTE !!")  // deviceExist.docs es [] osea vacio
             let device = {
                 type: "devices", // crear un dispositivo, tipo dispositivo "devices" (como una tabla devices)
@@ -184,13 +244,15 @@ app.post('/api/v1/meassures', async (req, res) => {
                 temperature: temperature,
                 humidity: humidity
             }
-            console.log("Dispositivo Creado: ", device)
+            // console.log("Dispositivo Creado: ", device)
             
-            // Insert new user into the database
+            // Insert new device into the database
             const response = await db.post(device);
+            // console.log("imprimo response: ", response)
+            
         }
-
-
+        // MAC is stored anyway for device existing purposes
+        devicesPrevious.push(device_id)
         
         // Respond with success
         res.status(201).json({ id: response.id, ...meassure });

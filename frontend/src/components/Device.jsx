@@ -43,7 +43,7 @@ function Device() {
     useEffect(() => {
         const intervalo = setInterval(() => {
           setContador(prev => prev + 1);
-        }, 5000);
+        }, 10000);
     
         // Limpieza al desmontar
         return () => clearInterval(intervalo);
