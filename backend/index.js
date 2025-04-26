@@ -13,23 +13,24 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Create a database (if it doesn't already exist)
-// const db = new PouchDB('wheather');
+// Creating a database (if it doesn't already exist)
 const dataDirectory = path.join(__dirname, 'data');  //directorio data, ojo __dirname está arriba
 
-// Habilita el uso de consultas más avanzadas (como .find()) en la base de datos.
+// This allows advances queries (like .find()) in the database.
 PouchDB.plugin(pouchdbFind)
-// No parece que funciona bien
+// It doesnt seem working¿?
 PouchDB.defaults({
   prefix: path.join(dataDirectory, path.sep), 
 });
 const db = new PouchDB(path.join(dataDirectory, 'wheather')); // bbdd wheater
 
 // Middleware
-app.use(cors()); // para tener acceso desde React, ya que React y Express no están en el mismo directorio
+app.use(cors()); // to be able access from frontend, because they are not on same directory?¿server¿?
 app.use(express.json());
 // app.use('/api/v1/meassures', usersRouters)
 
+// ********************************************
+// ********************************************
 // At the beginning, remove all devices if any
 const removeDevices = async () => {
     try {
@@ -54,74 +55,54 @@ const removeDevices = async () => {
     }
 }
 removeDevices()
+// ********************************************
+// ********************************************
 
 // setting initial state with devices
 let devicesPrevious = []
-// let firstTimeDevices = true
 setInterval(async () => {
-    // console.log("**************************")
-    // console.log("imprimo devicesPrevious: ", devicesPrevious)
+    // retrieving unique values from devicesPrevious
     const unicos = [...new Set(devicesPrevious)];
-    // console.log("imprimo unicos: ", unicos)
-    // console.log("**************************")
-    // devicesPrevious = []
-    // return
-
     const devicesTMP = []
-    // console.log("Valor devicesPrevious al entrar al setInterval: ", devicesPrevious)
-    // check actual devices with previous ones
     // getting devices
     const selector = {
         type: "devices"
     }
-    // Paso 1: Buscar todos los "devices"
+    // Searching for all available "devices"
     const result = await db.find({
         selector,
         fields: ['_id', '_rev', 'deviceMAC'], // OJO añadir SIEMPRE _id y _rev si no, no actualiza
         // limit: 10
     })
-    // console.log("imprimo result.docs.length: ", result.docs.length)
+    // If no data, no devices
     if (result.docs.length == 0) {
-        // firstTimeDevices = true
         devicesPrevious = []
         return
     }
-    // if (firstTimeDevices) {
-    //     devicesPrevious = [...result.docs]
-    //     firstTimeDevices = false
-    //     return
-    // }
 
     for (let doc of result.docs) {
-        const previousMACS = devicesPrevious.map(d => d.deviceMAC)
-        let founded = previousMACS.includes(doc.deviceMAC)
-        // console.log("founded: ", founded)
+        let founded = unicos.includes(doc.deviceMAC)
         if (founded) {
-            console.log("encontrado!!")
-            // se añade a devicesTMP
+            console.log("Encontrado!!")
             devicesTMP.push(doc)
         }
         else {
             console.log("NO encontrado")
-            // se borra (no pasamos de largo)
+            // se borra el elemento no encontrado
             await db.remove(doc._id, doc._rev); // Borramos el documento usando _id y _rev
         }
     }
-    // se borran todos los devices
-    // removeDevices()
-    // se crean todos los devices de devicesTMP
 
-
-    // se asigna a devicesPrevious el valor de devicesTMP
+    // devicePrevious value setted to devicesTMP value
     devicesPrevious = [...devicesTMP]
-    // console.log("devicesTMP al salir del For: ", devicesTMP)
 
 }, 15000);
 
 // *************************
 // *************************
-// devices start
-// **********
+// *** devices start    ****
+// *************************
+// *************************
 app.get('/api/v1/devices', async (req, res) => {
     try {
         // Fetch all documents from the 'wheather_db'
@@ -156,14 +137,16 @@ app.delete('/api/v1/device/:id', async (req, res) => {
 });
 
 // *************************
-//*****************************************
-// ********** meassures start *****
+// *************************
+// *** meassures start   ***
+// *************************
+// *************************
 // TAMBIÉN PODRÍAMOS PROBAR LAS APIS CON POSTMAN
 // poniendo POST y la url http://localhost:5000/api/v1/meassures
 // como Body - Raw - json
 // data structure:
 // {
-    // device_id: '8CAAB57456A8', // cada dispositivo tendrá una MAC distinta
+    // device_id: '8CAAB57456A8', // each device will have a different MAC address from factory
     // "temperature": 15.5,
     // "humidity": 68,
     // "dateTime": "2025-04-20" <---NO HACE FALTA, EL ORDENADOR YA LO CREA EL SOLO ANTES DE GUARDAR EL REGISTRO
@@ -182,11 +165,8 @@ app.get('/api/v1/meassures', async (req, res) => {
         const meassures = result.rows
             .filter(row => row.doc.type === 'tempHum')  // Ensure the document type is 'meassure'
             .map(row => row.doc);  // Map to get the document content
-
-        // console.log(meassures)
  
         // Send the meassure as JSON response
-        // res.json(meassures);
         res.status(200).json(meassures);
     } catch (error) {
         res.status(500).json({ error: 'Failed to retrieve meassure' });
@@ -200,11 +180,9 @@ app.post('/api/v1/meassures', async (req, res) => {
         meassure.date = new Date().toLocaleString("es-ES", { timeZone: "Europe/Madrid" });
 
         const {device_id, temperature, humidity} = req.body;
-        // console.log("objeto: ", meassure)
         
         // Insert new meassure into the database
         const response = await db.post(meassure);
-        // console.log(response)
 
         // Check if device is in devices table
         const selector = {
@@ -215,10 +193,9 @@ app.post('/api/v1/meassures', async (req, res) => {
         }
         const deviceExist = await db.find({
             selector,
-            fields: ['_id', '_rev', 'deviceMAC', 'temperature', 'humidity'], // OJO añadir SIEMPRE _id y _rev si no, no actualiza
+            fields: ['_id', '_rev', 'deviceMAC', 'temperature', 'humidity'], // add ALLWAYS _id AND _rev otherwise, doen't update
             // limit: 10
         })
-        // console.log("imprimo deviceExist: ", deviceExist)
         // Either if exist or not one device, it will be updated/created with last temp. and humid. registry
         if (deviceExist.docs.length !== 0){
             // if device exist, update temp and humid with last registry
@@ -226,30 +203,25 @@ app.post('/api/v1/meassures', async (req, res) => {
             const existingDevice = deviceExist.docs[0];
             const updatedDevice = {
                 _id: existingDevice._id,
-                _rev: existingDevice._rev, // obligatorio para actualizar en PouchDB
+                _rev: existingDevice._rev, // compulsory to update in PouchDB
                 type: "devices",
                 deviceMAC: device_id,
                 temperature,
                 humidity
             };
             await db.put(updatedDevice);
-            // console.log("Dispositivo actualizado: ", updatedDevice.deviceMAC);
             
         } else {
             // if not exist, a new deviced is created with temp. and humid.
-            console.log("NO EXISTE !!")  // deviceExist.docs es [] osea vacio
+            console.log("NO EXISTE !!")  // deviceExist.docs will be [] (empty)
             let device = {
                 type: "devices", // crear un dispositivo, tipo dispositivo "devices" (como una tabla devices)
                 deviceMAC: device_id,
                 temperature: temperature,
                 humidity: humidity
             }
-            // console.log("Dispositivo Creado: ", device)
-            
             // Insert new device into the database
             const response = await db.post(device);
-            // console.log("imprimo response: ", response)
-            
         }
         // MAC is stored anyway for device existing purposes
         devicesPrevious.push(device_id)
@@ -265,8 +237,8 @@ app.delete('/api/v1/meassures/:id', async (req, res) => {
 
     const {id} = req.params
     try {
-        const meassure = await db.get(id)   // cogemos documento (meassure)
-        await db.remove(meassure)   // borra documento
+        const meassure = await db.get(id)   // getting document (meassure)
+        await db.remove(meassure)   // deleting document
         res.status(200).json({message: "Deleted OK"})
 
     } catch (error) {
@@ -278,8 +250,7 @@ app.get('/api/v1/meassures/:id', async (req, res) => {
 
     const {id} = req.params
     try {
-        const meassure = await db.get(id)   // cogemos documento (meassure)
-        // await db.remove(meassure)   // borra documento
+        const meassure = await db.get(id)   // getting document (meassure)
         res.status(200).json({ ...meassure})
 
     } catch (error) {

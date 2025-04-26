@@ -6,6 +6,9 @@ Express Backend receives and stores data sent via wifi from different devices cr
 React Frontend shows the information received from these devices.
 
 If new device is connected, it will be added to the frontend automatically.
-Pending if one device is disconnected to be deleted from the frontend automatically.
+If a device is disconneted, it is removed from the frontend automatically.
 
-Expected to add more functionalities like data statistics.
+Expected to add more functionalities:
+    data statistics by date
+    activate one device (air aconditioning) if the temperature reach a value and deactivate if below that value
+    activate one device (dehumidifier) if the humidity reach a value and deactivate if below that value

@@ -76,7 +76,7 @@ function Device() {
                         </Box>
                     </Box>      
                 ))
-            : <Typography>NO HAY DISPOSITIVOS DISPONIBLES</Typography> }
+            : <Typography>NO DEVICES AVAILABLE !!</Typography> }
         </Box>
     </div>
   );

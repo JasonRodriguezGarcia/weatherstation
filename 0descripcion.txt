@@ -35,4 +35,6 @@ Fichero para programar con Arduino IDE (algo así como el Visual Studio Code de 
 - /weather3/weather3.ino
     Versión que permite conectar varios sensores localizados en distintas hubicaciones y enviando
     información con su propio ID para diferenciarse unos de otros.
-    Pending probar con varios sensores.
+
+A investigar peticiones GET (google "hacer una peticion get con esp8266")
+    https://www.youtube.com/watch?v=Cak4MdBn8po

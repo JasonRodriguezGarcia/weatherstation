@@ -8,14 +8,12 @@ import Device from './components/Device';
 function App() {
   return (
     <BrowserRouter>
-        <Device />
       {/* <CochesSummary /> */}
-      <Routes>
-
-        <Route path="/" element={<HomePage />} />
-        {/* <Route path="/descriptions" element={<DescriptionsListPage />} /> */}
-
-      </Routes>
+        <Routes>
+            <Route path="/" element={<HomePage />} />
+            {/* <Route path="/descriptions" element={<DescriptionsListPage />} /> */}
+        </Routes>
+        <Device />
     </BrowserRouter>
   );
 }
