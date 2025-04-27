@@ -35,7 +35,8 @@ DHT dht(DHTPIN, DHTTYPE);
 // LiquidCrystal_I2C lcd(0x27, 16, 2);  // PARA DIRECCION 0x27
 LiquidCrystal_I2C lcd(0x3F, 16, 2);     // PARA DIRECCION 0x3F
 
-const char* apiBaseUrl = "http://192.168.0.18:5000/api/v1/";
+const char* apiBaseUrl = "https://weatherstation-hyck.onrender.com/api/v1/";
+// const char* apiBaseUrl = "http://192.168.0.18:5000/api/v1/";
 const char* apiKey = "tu_clave_de_api";
 
 String deviceId; // define variable para poder identificar dispositivo en backend
