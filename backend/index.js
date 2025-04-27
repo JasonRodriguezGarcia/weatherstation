@@ -31,7 +31,7 @@ const db = new PouchDB(path.join(dataDirectory, 'wheather')); // bbdd wheater
 // Para configurar cors
 const corsOptions = { 
     // poner más dentro de los "[]" separados por "," cuando tenga la web del deployment
-    origin: ["http://localhost:3000", "https://weatherstation-frontend.onrender.com"], 
+    origin: ["http://localhost:3000", "https://weatherstation-1-zu3u.onrender.com"], 
     // methods:["POST"] // sin esta línea se deja todos los methods
 }
 app.use(cors()); // to be able access from frontend, because they are not on same directory?¿server¿?
