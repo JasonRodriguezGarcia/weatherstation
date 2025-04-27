@@ -25,7 +25,18 @@ PouchDB.defaults({
 const db = new PouchDB(path.join(dataDirectory, 'wheather')); // bbdd wheater
 
 // Middleware
+// cors() permite el acceso entre dominios (Cross-Origin Resource Sharing).
+// Esto es necesario cuando tienes React y Express en distintos orígenes (por ejemplo, React en localhost:3000 y Express en localhost:5000).
+// Sin esto, el navegador bloquearía las peticiones por razones de seguridad.
+// Para configurar cors
+const corsOptions = { 
+    // poner más dentro de los "[]" separados por "," cuando tenga la web del deployment
+    origin: ["http://localhost:3000", "https://mi-web-de-produccion-frontend"], 
+    // methods:["POST"] // sin esta línea se deja todos los methods
+}
 app.use(cors()); // to be able access from frontend, because they are not on same directory?¿server¿?
+// Habilita el parsing de JSON en los requests.
+// Es decir, cuando un cliente (como React) envía datos en formato JSON (por ejemplo, en un POST o PUT), Express puede leerlos desde req.body.
 app.use(express.json());
 // app.use('/api/v1/meassures', usersRouters)
 
