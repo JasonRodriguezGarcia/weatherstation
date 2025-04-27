@@ -4,7 +4,7 @@ import { Button, Box, TextField, Typography } from '@mui/material';
 import "./font.css"
 
 // const apiDevices = "http://localhost:5000/api/v1/devices"
-const apiDevices = "https://weatherstation-hyck.onrender.com" // cambiar cuando tenga la web del deployment
+const apiDevices = "https://weatherstation-hyck.onrender.com/api/v1/devices" // cambiar cuando tenga la web del deployment
 
 function Device() {
 
