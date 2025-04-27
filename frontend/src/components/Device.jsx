@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Button, Box, TextField, Typography } from '@mui/material';
 import "./font.css"
 
-const apiDevices = "http://localhost:5000/api/v1/devices"
-// const apiDevices = "https://mi-web-de-produccion-backend" // cambiar cuando tenga la web del deployment
+// const apiDevices = "http://localhost:5000/api/v1/devices"
+const apiDevices = "https://weatherstation-hyck.onrender.com" // cambiar cuando tenga la web del deployment
 
 function Device() {
 
