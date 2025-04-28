@@ -15,6 +15,7 @@ Material inicial
 
 Fuente de información:
 https://www.youtube.com/watch?v=5NkyvyodCLE&ab_channel=LosProfesparavos
+https://randomnerdtutorials.com/esp8266-nodemcu-https-requests/#esp8266-https-requests-fingerprint
 
 Servidor express:
 - index.js
@@ -35,6 +36,21 @@ Fichero para programar con Arduino IDE (algo así como el Visual Studio Code de 
 - /weather3/weather3.ino
     Versión que permite conectar varios sensores localizados en distintas hubicaciones y enviando
     información con su propio ID para diferenciarse unos de otros.
+
+- /weather4/weather4.ino
+    Versión que permite usar https, pero tenemos que conseguir el fingerprint de render.com. Para ello lo 
+    conseguimos desde el Bash de Git en VSC poniendo:
+        echo | openssl s_client -connect weatherstation-hyck.onrender.com:443 | openssl x509 -noout -fingerprint -sha1
+    su resultado podría ser:
+        Connecting to 216.24.57.4
+        depth=2 C=US, O=Google Trust Services LLC, CN=GTS Root R4
+        verify return:1
+        ... ... bla bla bla y
+        verify return:1
+        sha1 Fingerprint=76:CF:2F:46:CF:E2:C4:D6:AB:23:EB:25:83:F2:C8:7B:E3:07:8C:7C
+        DONE
+    Nos quedamos con el Fingerprint sin los ":" ->> 76CF2F46CFE2C4D6AB23EB2583F2C87BE3078C7C que es lo añadiremos
+    al código del .ino
 
 A investigar peticiones GET (google "hacer una peticion get con esp8266")
     https://www.youtube.com/watch?v=Cak4MdBn8po

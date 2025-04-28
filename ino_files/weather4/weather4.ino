@@ -1,6 +1,7 @@
 // VERSION CON LCD 1602 16X2 CON MODULO I2C (OPCIONAL)
 // POSIBILIDAD DE CAMBIAR ENTRE SENSOR DHT11 (SENCILLO) POR DHT22 (MEJORADO)
 // ENVIA ID DEL DISPOSITIVO PARA PODER IDENTIFICAR PROCEDENCIA DE DATOS DE DISTINTOS DISPOSITIVOS EN BACKEND
+// PERTIME EL USO DE HTTPS AL HACER LLAMADA A API
 
 // Para poder trabajar y programar este módulo compatible Arduino, hay que descargar arduino ide de 
 // https://www.arduino.cc/en/software/
@@ -14,7 +15,7 @@
 // luego en tools / board / aparecerá ESP8266 / Generic ESP8266 module
 // después en tools / Flash Size / poner 4MB(FS: 1MB OTA: 1019kb)
 // Instalar la librería LiquidCrystal_I2C desde el Administrador de Bibliotecas (Tools / Manage libraries).
-
+// Instalar la librería Base 64 desde Sketch → Include Library → Manage Libraries
 
 
 // https://www.youtube.com/watch?v=5NkyvyodCLE&ab_channel=LosProfesparavos
@@ -27,7 +28,8 @@
 // #define DHTTYPE DHT11        // Definiendo el tipo de DHT para ser DHT11, lee cada 1 segundo
 #define DHTTYPE DHT22           // Definiendo el tipo de DHT para ser DHT22, lee cada 2 segundos
 DHT dht(DHTPIN, DHTTYPE);
-
+// Esto para el permitir https
+#include <WiFiClientSecure.h>  // Añade esta librería arriba para https
 // Esto es para el el LCD 16x2
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
@@ -67,6 +69,7 @@ void setup() {
     deviceId.replace(":", "");      // eliminar los dos puntos ya que si no la MAC no entra en una línea
     lcd.print("MAC:" + deviceId);
     Serial.println("MAC: " + deviceId);
+
     
     delay(3000);
 }
@@ -108,7 +111,10 @@ void loop() {
 }
 
 void sendDataToApi(float temperature_data, float humidity_data) {
-  WiFiClient client;
+  // WiFiClient client;
+  WiFiClientSecure client;
+  client.setFingerprint("76CF2F46CFE2C4D6AB23EB2583F2C87BE3078C7C"); 
+  
   HTTPClient http;
 
   String url = String(apiBaseUrl) + "meassures";
@@ -134,7 +140,7 @@ void sendDataToApi(float temperature_data, float humidity_data) {
       Serial.println("Error en la solicitud. Código de error: " + String(httpCode));
     }
   } else {
-    Serial.println("Error en la conexión");
+    Serial.println("Error en la conexión" + String(http.errorToString(httpCode).c_str()));
   }
 
   http.end();
