@@ -160,7 +160,6 @@ app.delete('/api/v1/device/:id', async (req, res) => {
     // device_id: '8CAAB57456A8', // each device will have a different MAC address from factory
     // "temperature": 15.5,
     // "humidity": 68,
-    // "dateTime": "2025-04-20" <---NO HACE FALTA, EL ORDENADOR YA LO CREA EL SOLO ANTES DE GUARDAR EL REGISTRO
 // }
 
 app.get('/api/v1/meassures', async (req, res) => {
