@@ -22,7 +22,25 @@ PouchDB.plugin(pouchdbFind)
 PouchDB.defaults({
   prefix: path.join(dataDirectory, path.sep), 
 });
-const db = new PouchDB(path.join(dataDirectory, 'wheather')); // bbdd wheater
+const db = new PouchDB(path.join(dataDirectory, 'weather')); // bbdd wheater
+// creating indexes
+(async () => {
+    try { 
+        // En pouch.db cuando se crean los índices al principio en backend y al hacer consultas , se 
+        // selecciona automaticamente el índice más adecuado, no hace falta seleccionar uno
+        // Si no encuentra uno adecuado entonces se lanza el aviso
+        // "No matching index found, create an index to optimize query time."
+        await db.createIndex({ index: { fields: ['_id'] } });
+        await db.createIndex({ index: { fields: ['_id', 'type'] } });
+        await db.createIndex({ index: { fields: ['type'] } });
+        await db.createIndex({ index: { fields: ['type', 'deviceMac'] } });
+        console.log('Índice creado para campos: "_id", "id+type", "type", "type+deviceMac".');
+    } catch (err) {
+        console.error('Error al crear índices:', err);
+    }
+  })();
+
+
 
 // Middleware
 // cors() permite el acceso entre dominios (Cross-Origin Resource Sharing).
