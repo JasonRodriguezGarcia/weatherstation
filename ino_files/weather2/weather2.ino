@@ -55,7 +55,7 @@ void setup() {
     dht.begin(); // INICIALIZA SENSOR DHT22
 
     // Iniciando la consola serie
-    WiFi.begin("vodafone3CAA", "NZWR3LH9ACXPR4"); // poner nombre wifi y contraseña
+    WiFi.begin("xxxxxxxxx", "xxxxxxxxxxx"); // poner nombre wifi y contraseña
 
     while (WiFi.status() != WL_CONNECTED) {
         delay(1000);

@@ -35,7 +35,7 @@ const char* apiKey = "tu_clave_de_api";
 
 void setup() {
   Serial.begin(9600);
-  WiFi.begin("vodafone3CAA", "NZWR3LH9ACXPR4"); // poner nombre wifi y contraseña
+  WiFi.begin("xxxxxxxexxxx", "xxxxxxxxxxxxxx"); // poner nombre wifi y contraseña
 
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);

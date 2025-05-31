@@ -56,7 +56,7 @@ void setup() {
     
     dht.begin(); // INICIALIZA SENSOR DHT22
 
-    WiFi.begin("vodafone3CAA", "NZWR3LH9ACXPR4"); // poner nombre wifi y contraseña
+    WiFi.begin("xxxxxxxxxxx", "xxxxxxxx"); // poner nombre wifi y contraseña
 
     while (WiFi.status() != WL_CONNECTED) {
         delay(1000);
@@ -113,7 +113,7 @@ void loop() {
 void sendDataToApi(float temperature_data, float humidity_data) {
   // WiFiClient client;
   WiFiClientSecure client;
-  client.setFingerprint("76CF2F46CFE2C4D6AB23EB2583F2C87BE3078C7C"); 
+  client.setFingerprint("67CFFFXXXXX76839ABCD"); 
   
   HTTPClient http;
 
