@@ -54,7 +54,7 @@ function Device() {
     <div>
         <Box component="div" sx={{display: "flex", flexDirection: "column", alignItems: "center"}}>
             <Typography variant="h1">
-                Weather station
+                Devices station
             </Typography>
             {devices.length > 0 ?
                 devices.map ((device, index) => (
@@ -66,7 +66,7 @@ function Device() {
                                 
                             }}>
                                 <Typography sx={{fontFamily: 'LcdDot', fontSize: "10px", lineHeight: "30px"}}>
-                                    Device: {device.deviceMAC} 
+                                    Dev. MAC: {device.deviceMAC} 
                                 </Typography>
                                 <Typography sx={{fontFamily: 'LcdDot', fontSize: "10px", lineHeight: "30px"}}>
                                     Temperatura: {device.temperature} ºC

@@ -14,9 +14,9 @@ function HomePage() {
     <div>
       <h2>Welcome to Home page</h2>
 
-      {/* <Button variant="contained" color="primary" onClick={goToCars}>
-        Go to somewhere ...
-      </Button> */}
+      <Button variant="contained" color="primary" onClick={goToCars}>
+        Under develop ...
+      </Button>
     </div>
   );
 }
