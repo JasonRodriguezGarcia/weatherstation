@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { Button, Box, TextField, Typography } from '@mui/material';
 import "./font.css"
 
+const BACKEND_URL_RENDER = process.env.REACT_APP_BACKEND_URL_RENDER
+console.log ("backen_url_render: ", BACKEND_URL_RENDER)
 // const apiDevices = "http://localhost:5000/api/v1/devices"
-const apiDevices = "https://weatherstation-hyck.onrender.com/api/v1/devices" // cambiar cuando tenga la web del deployment
+// const apiDevices = "https://weatherstation-hyck.onrender.com/api/v1/devices"
 
 function Device() {
 
@@ -19,16 +21,17 @@ function Device() {
     }
 
     useEffect(()=> {
+        console.log("llamando ...: ", BACKEND_URL_RENDER)
         const fetchDevices = async () => {
             try {
-                const response = await fetch(`${apiDevices}`);
+                const response = await fetch(`${BACKEND_URL_RENDER}/api/v1/devices`);
                 if (!response.ok) {
                 throw new Error('Network response was not ok');
                 }
                 const data = await response.json();
-                console.log("imprimo data: ", data)
-                setDevices(data)
-                console.log("imprimo devices: ", devices)
+                console.log("imprimo data: ", data);
+                setDevices(data);
+                console.log("imprimo devices: ", devices);
 
             } catch (error) {
                 setError(error.message); // Handle errors
@@ -36,21 +39,20 @@ function Device() {
                 // setLoading(false); // Set loading to false once data is fetched or error occurs
             }
         }
-        fetchDevices()
-
+        fetchDevices();
 
     }, [contador])
 
     useEffect(() => {
         const intervalo = setInterval(() => {
           setContador(prev => prev + 1);
+          
+          // Limpieza al desmontar
         }, 10000);
-    
-        // Limpieza al desmontar
         return () => clearInterval(intervalo);
-      }, []);
+    }, []);
 
-  return (
+    return (
     <div>
         <Box component="div" sx={{display: "flex", flexDirection: "column", alignItems: "center"}}>
             <Typography variant="h1">
@@ -80,6 +82,6 @@ function Device() {
             : <Typography>NO DEVICES AVAILABLE !!</Typography> }
         </Box>
     </div>
-  );
+    );
 }
 export default Device;

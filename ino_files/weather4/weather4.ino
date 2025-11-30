@@ -36,10 +36,35 @@ DHT dht(DHTPIN, DHTTYPE);
 // Dirección I2C común: 0x27 o 0x3F
 // LiquidCrystal_I2C lcd(0x27, 16, 2);  // PARA DIRECCION 0x27
 LiquidCrystal_I2C lcd(0x3F, 16, 2);     // PARA DIRECCION 0x3F
+// --- CA LET’S ENCRYPT ISRG ROOT X1 (VÁLIDA HASTA 2035) ---
+static const char LE_ROOT_CA[] PROGMEM = R"EOF(
+-----BEGIN CERTIFICATE-----
+MIIFazCCA1OgAwIBAgISA5cVwP0xR2lHr9CLAGRg+jQaMA0GCSqGSIb3DQEBCwUA
+MEoxCzAJBgNVBAYTAlVTMQswCQYDVQQIDAJDQTEWMBQGA1UEBwwNTW91bnRhaW4g
+VmlldzEUMBIGA1UECgwLRGVjaUNlcnQgSW5jMB4XDTIwMDkxNjAwMDAwMFoXDTMz
+MDkxNjAwMDAwMFowSjELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAkNBMRYwFAYDVQQH
+DA1Nb3VudGFpbiBWaWV3MRQwEgYDVQQKDAtEZWdpQ2VydCBJbmMwggIiMA0GCSqG
+SIb3DQEBAQUAA4ICDwAwggIKAoICAQDNOv4QIULaXfPa2vL1P2SMy1iKq+VqKjcd
+M8jTe3uBbl9Pz3dCavgrPUW4O7r05P1+WNZwxKMoYnKpCnGcNVp9/nhFlBp1C1A+
+pykB0x/M33V+lpXFKnf0Z1J2H2TNv3yoaxplxXy0eYGti+nkZxku9kpFWn1qmu/j
+iJ6TmcnZ0Vp0XAjk8xyA7mV3IMguQmyENqwR7XmmNM8mUv6YT59vAeU3P6wakfxU
+4GoCdZJqoZaMM5sE8SzvdnyTRuT7pCn5kFzT2/8qkQaaMo+yhV6ZRlGRtmpikHpp
+lP2jewerDnQnvznbjb0oEJj2QXqzUZ81E+Vnw1KhTUICBCOBYZp2LKjcg1sKkp+2
+g4P84F8pMuvLFQ5BtIg32rX8wkeyaMV+rZ5ilYLMZpfeMZ/+ydPf3YXRw2xPEMsr
+3MrI/gKXa+v5PNF+vZxeTGW9pyhp+Yp0T8fjM7ARuwS4GgKxecFlD/DFtlpZoZXw
+L6Ij7/JPUv2lSqyD4U2Jppl6xr1+LvoIPxj8aWEkKC4vCh9wbwtKnEZ0G93SaOfp
+6RLlA8POiG0B0E7U3vE0UN5LXBo/qbPorJzTQtMZspN4402ZVNca3CoGvU8VGS7j
+5QT1v49tG6PFEMrBKSe4gGk45hbcWqy5KumbYrudkCVzlzvSnluxPSSMpk9z5pKz
+x0/mPDDhugIDAQABo0IwQDAdBgNVHQ4EFgQUNxeSwA2kLTeksoJGELp65z3xwOYw
+HwYDVR0jBBgwFoAUNxeSwA2kLTeksoJGELp65z3xwOYwCgYIKoZIzj0EAwIDSAAw
+RQIhAPa4GmFkvGr8bYEiwDr1+eoo1+w7SaiQpsqvsmdu4dfKAiA2EEmnmqMxhIeb
+8R8vD55eyXHD+gk1LXeMmfxknn62BQ==
+-----END CERTIFICATE-----
+)EOF";
 
 const char* apiBaseUrl = "https://weatherstation-hyck.onrender.com/api/v1/";
-// const char* apiBaseUrl = "http://192.168.0.18:5000/api/v1/";
-const char* apiKey = "tu_clave_de_api";
+// const char* apiBaseUrl = "http://192.168.0.20:5000/api/v1/"; // ip local
+// const char* apiKey = "tu_clave_de_api";
 
 String deviceId; // define variable para poder identificar dispositivo en backend
 
@@ -56,7 +81,7 @@ void setup() {
     
     dht.begin(); // INICIALIZA SENSOR DHT22
 
-    WiFi.begin("xxxxxxxxxxx", "xxxxxxxx"); // poner nombre wifi y contraseña
+    WiFi.begin("vodafone3CAA", "NZWR3LH9ACXPR4"); // poner nombre wifi y contraseña
 
     while (WiFi.status() != WL_CONNECTED) {
         delay(1000);
@@ -64,6 +89,8 @@ void setup() {
     }
 
     Serial.println("Conexión WiFi establecida");
+    Serial.print("IP del ESP8266: ");
+    Serial.println(WiFi.localIP());
     lcd.setCursor(0, 1);            // Columna 0, línea 1
     deviceId = WiFi.macAddress();   // "84:F3:EB:AB:12:34" (por ejemplo)
     deviceId.replace(":", "");      // eliminar los dos puntos ya que si no la MAC no entra en una línea
@@ -111,36 +138,49 @@ void loop() {
 }
 
 void sendDataToApi(float temperature_data, float humidity_data) {
-  // WiFiClient client;
-  WiFiClientSecure client;
-  client.setFingerprint("67CFFFXXXXX76839ABCD"); 
-  
-  HTTPClient http;
 
+  HTTPClient http;
   String url = String(apiBaseUrl) + "meassures";
   Serial.println("URL de solicitud: " + url);
 
-  http.begin(client, url);
+  bool isHttps = url.startsWith("https");
 
-//   http.addHeader("Authorization", apiKey);
+  if (isHttps) {
+      Serial.println("🔒 Modo HTTPS con CA Let’s Encrypt");
+
+      WiFiClientSecure client;
+      client.setTimeout(5000);
+      client.setTrustAnchors(new X509List(LE_ROOT_CA));
+
+      if (!http.begin(client, url)) {
+        Serial.println("❌ Error iniciando conexión HTTPS");
+        return;
+      }
+
+  } else {
+      Serial.println("🔓 Modo HTTP local");
+
+      WiFiClient client;
+      if (!http.begin(client, url)) {
+        Serial.println("❌ Error iniciando conexión HTTP");
+        return;
+      }
+  }
+
   http.addHeader("Content-Type", "application/json");
-  // http.addHeader("Authorization", "Bearer "+ deviceId);
 
-  // Crear un objeto JSON con los datos a enviar en el body
-  String jsonData = "{\"device_id\": \"" + String(deviceId) + "\", \"temperature\": " + String(temperature_data) + ", \"humidity\": " + String(humidity_data) + "}";
+  String jsonData = 
+    "{\"device_id\": \"" + String(deviceId) + 
+    "\", \"temperature\": " + String(temperature_data) +
+    ", \"humidity\": " + String(humidity_data) + "}";
 
   int httpCode = http.POST(jsonData);
 
   if (httpCode > 0) {
-    // if (httpCode == HTTP_CODE_OK) {
-    if (httpCode >= 200 && httpCode < 300) {
-      String payload = http.getString();
-      Serial.println("Respuesta recibida: " + payload);
-    } else {
-      Serial.println("Error en la solicitud. Código de error: " + String(httpCode));
-    }
+      Serial.println("HTTP CODE: " + String(httpCode));
+      Serial.println("Payload: " + http.getString());
   } else {
-    Serial.println("Error en la conexión" + String(http.errorToString(httpCode).c_str()));
+      Serial.println("❌ Error en POST: " + String(http.errorToString(httpCode).c_str()));
   }
 
   http.end();
