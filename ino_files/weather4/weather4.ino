@@ -144,6 +144,7 @@ void sendDataToApi(float temperature_data, float humidity_data) {
   Serial.println("URL de solicitud: " + url);
 
   bool isHttps = url.startsWith("https");
+  Serial.println("isHttps: " + isHttps);
 
   if (isHttps) {
       Serial.println("🔒 Modo HTTPS con CA Let’s Encrypt");
