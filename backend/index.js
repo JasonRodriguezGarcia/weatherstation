@@ -313,6 +313,14 @@ app.put('/api/v1/meassures/:id', async (req, res) => {
         res.status(500).json({ error: 'Failed to update meassure' });
     }
 });
+
+// ✅ Endpoint de salud básico (para Render / UptimeRobot-pending)
+// Usaremos este Endpoint para que el backend en Render que es gratuíto no entre en stand-by
+app.get("/api/v1/meassures/health", (req, res) => {
+    console.log("Llamando a Health para no entrar en stand-by...")
+    res.status(200).send("OK")
+})
+
 // ********** meassure end ***************
 //*****************************************
 

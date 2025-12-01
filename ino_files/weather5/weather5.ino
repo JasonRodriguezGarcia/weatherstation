@@ -145,7 +145,7 @@ void sendDataToApi(float temperature_data, float humidity_data) {
   //     echo | openssl s_client -connect weatherstation-hyck.onrender.com:443 | openssl x509 -noout -fingerprint -sha1
   // OJO PONER EL RESULTADO SIN LOS ":"
   // EN RENDER SE CAMBIA EL FINGERPRINT CADA "X" MESES, POR LO QUE IGUAL NO FUNCIONA MÁS TARDE
-  client.setFingerprint("439F7D88E08FAD9EA2ED1A004845BE46DEF8E24A"); 
+  client.setFingerprint("A8EE4611100C0E7D4E9D25EB6350683045916B28"); 
   
   HTTPClient http;
   
@@ -174,8 +174,6 @@ void sendDataToApi(float temperature_data, float humidity_data) {
         return;
       }
   }
-
-
 
 //   http.addHeader("Authorization", apiKey);
   http.addHeader("Content-Type", "application/json");
