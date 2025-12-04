@@ -59,23 +59,39 @@ function Device() {
                 Devices station
             </Typography>
             {devices.length > 0 ?
-                devices.map ((device, index) => (
+                devices.map((device, index) => (
                     <Box key={index} component="div" sx={{display: "flex", margin: "10px", border: "1px solid",
                             borderRadius: "10px", backgroundColor: "black", padding: "10px"}}>
                         <Box component="div"
                             sx={{display: "flex", width: "100%", flexDirection: "column", border: "1px solid",
                                 backgroundColor: "blue", color: "white", padding: "20px",
-                                
                             }}>
-                                <Typography sx={{fontFamily: 'LcdDot', fontSize: "10px", lineHeight: "30px"}}>
-                                    Dev. MAC: {device.deviceMAC} 
-                                </Typography>
-                                <Typography sx={{fontFamily: 'LcdDot', fontSize: "10px", lineHeight: "30px"}}>
-                                    Temperatura: {device.temperature} ºC
-                                </Typography>
-                                <Typography sx={{fontFamily: 'LcdDot', fontSize: "10px", lineHeight: "30px"}}>
-                                    Humedad: {device.humidity} %
-                                </Typography>
+                            {Object.entries(device).map((dev, index) => {
+                                const notNeededFields = ['_id', '_rev', 'type']
+                                let resultTypo = null
+                                if (!notNeededFields.includes(dev[0])) // usamos .some por ser array, si objeto .includes
+                                    if (typeof(dev[1]) === 'object') {
+                                        resultTypo = Object.entries(dev[1]).map((value, index) => {
+                                            // return <li>{value[0]}: {value[1]}</li>
+                                            return (
+                                                <Typography key={index} sx={{fontFamily: 'LcdDot', fontSize: "10px", lineHeight: "30px"}}>
+                                                    {value[0]}: {value[1]}
+                                                </Typography>
+                                            )
+                                        })
+                                    }
+                                    else
+                                        resultTypo = `${dev[0]} : ${dev[1]}`
+                                    const neededField = () => {
+                                        return resultTypo
+                                    }
+                                        return (
+                                            <Typography key={index} sx={{fontFamily: 'LcdDot', fontSize: "10px", lineHeight: "30px"}}>
+                                                {neededField()} 
+                                            </Typography>
+                                        )
+                                })
+                            }
                         </Box>
                     </Box>      
                 ))

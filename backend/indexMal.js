@@ -16,20 +16,13 @@ const PORT = process.env.PORT || 5000;
 // Creating a database (if it doesn't already exist)
 const dataDirectory = path.join(__dirname, 'data');  //directorio data, ojo __dirname está arriba
 
-// This allows advances queries (like .find()) in the database)
+// This allows advances queries (like .find()) in the database.
 PouchDB.plugin(pouchdbFind)
 // It doesnt seem working¿?
-// PouchDB.defaults({
-//   prefix: path.join(dataDirectory, path.sep), 
-// });
-// const db = new PouchDB(path.join(dataDirectory, 'devices')); // bbdd wheater
-const CustomPouch = PouchDB.defaults({
-  prefix: dataDirectory + path.sep
+PouchDB.defaults({
+  prefix: path.join(dataDirectory, path.sep), 
 });
-
-const db = new CustomPouch("devices");
-
-
+const db = new PouchDB(path.join(dataDirectory, 'devices')); // bbdd wheater
 // creating indexes
 (async () => {
     try { 
@@ -37,7 +30,7 @@ const db = new CustomPouch("devices");
         // selecciona automaticamente el índice más adecuado, no hace falta seleccionar uno
         // Si no encuentra uno adecuado entonces se lanza el aviso
         // "No matching index found, create an index to optimize query time."
-        // await db.createIndex({ index: { fields: ['_id'] } }); // pouchdb ya lo hace solo
+        // await db.createIndex({ index: { fields: ['_id'] } });  // No necesario Pouchdb lo hace solo
         await db.createIndex({ index: { fields: ['_id', 'type'] } });
         await db.createIndex({ index: { fields: ['type'] } });
         await db.createIndex({ index: { fields: ['type', 'deviceMac'] } });
@@ -71,7 +64,7 @@ app.use(express.json());
 const removeDevices = async () => {
     try {
         const selector = {
-            type: "devices"
+            docType: "devices"
         }
         // Paso 1: Buscar todos los "devices"
         const result = await db.find({
@@ -79,17 +72,23 @@ const removeDevices = async () => {
             fields: ['_id', '_rev'], // OJO añadir SIEMPRE _id y _rev si no, no actualiza
             // limit: 10
         })
+        // const result = await db.allDocs({include: true})
 
         // Paso 2: Eliminar cada documento encontrado
         for (let doc of result.docs) {
-            await db.remove(doc._id, doc._rev); // Borramos el documento usando _id y _rev
+            await db.remove(doc); // Borramos el documento usando _id y _rev
+            // await db.remove(doc._id, doc._rev); // Borramos el documento usando _id y _rev
         }
+        const resultCuenta = await db.allDocs({ include_docs: true}); // trae todos los documentos
+        const docsNormales = resultCuenta.rows.filter(row => !row.id.startsWith('_design/'));
+        console.log("cuenta docsNormales: ", docsNormales.length)
         console.log("All devices Deleted OK")
         
     } catch (error) {
         console.log(error.message)
     }
 }
+
 removeDevices()
 // ********************************************
 // ********************************************
@@ -102,7 +101,7 @@ setInterval(async () => {
     const devicesTMP = []
     // getting devices
     const selector = {
-        type: "devices"
+        // type: "devices"
     }
     // Searching for all available "devices"
     const result = await db.find({
@@ -118,12 +117,12 @@ setInterval(async () => {
 
     for (let doc of result.docs) {
         let founded = unicos.includes(doc.deviceMAC)
-        if (founded) { // un dispositivo que estaba conectado, se ha encontrado de nuevo
-            console.log(`Encontrado ${doc.deviceMAC} !! En el interval que revisa dispositivos nuevos`)
+        if (founded) {
+            console.log("Encontrado!!")
             devicesTMP.push(doc)
         }
-        else { // un dispositivo que estaba conectado, se ha DESCONECTADO
-            console.log(`NO encontrado ${doc.deviceMAC} !! En el interval que revisa dispositivos nuevos`)
+        else {
+            console.log("NO encontrado")
             // se borra el elemento no encontrado
             await db.remove(doc._id, doc._rev); // Borramos el documento usando _id y _rev
         }
@@ -147,10 +146,10 @@ app.get('/api/v1/devices', async (req, res) => {
   
         // Filter the meassure if 'type' is used in the document
         const devices = result.rows
-            .filter(row => row.doc.type === 'devices')  // Ensure the document type is 'meassure'
+            // .filter(row => row.doc.type === 'devices')  // Ensure the document type is 'meassure'
             .map(row => row.doc);  // Map to get the document content
 
-        console.log("Imprimo devices en /devices: ", devices)
+        console.log("Esto se manda a frontend: ", devices)
  
         res.status(200).json(devices);
     } catch (error) {
@@ -158,20 +157,13 @@ app.get('/api/v1/devices', async (req, res) => {
     }
 });
 
-app.delete('/api/v1/device/:device_id', async (req, res) => {
+app.delete('/api/v1/device/:id', async (req, res) => {
 
-    const {device_id} = req.params
-    console.log("imprimo req.params: ", req.params)
-    console.log("imprimo device_id: ", device_id, typeof(device_id))
-    const selector = { deviceMAC: device_id }
-
+    const {id} = req.params
+    console.log(req.params)
     try {
-        const deleteDevice = await db.find({selector})   // cogemos documento (meassure)
-        if (!deleteDevice.docs.length) {
-            return res.status(404).json({ error: "Not found" })
-        }
-        const doc = deleteDevice.docs[0]
-        await db.remove(doc)   // borra documento
+        const device = await db.get(id)   // cogemos documento (meassure)
+        await db.remove(device)   // borra documento
         res.status(200).json({message: "Deleted OK"})
 
     } catch (error) {
@@ -194,24 +186,24 @@ app.delete('/api/v1/device/:device_id', async (req, res) => {
     // "humidity": 68,
 // }
 
-app.get('/api/v1/meassures', async (req, res) => {
+app.get('/api/v1/measures', async (req, res) => {
     try {
         // Fetch all documents from the 'wheather_db'
         const result = await db.allDocs({ include_docs: true });
         // console.log(result);
   
-        // Extract meassure data from the documents
-        // const meassure = result.rows.map(row => row.doc);
+        // Extract measure data from the documents
+        // const measure = result.rows.map(row => row.doc);
 
-        // Filter the meassure if 'type' is used in the document
-        const meassures = result.rows
-            .filter(row => row.doc.type === 'tempHum')  // Ensure the document type is 'meassure'
+        // Filter the measure if 'type' is used in the document
+        const measures = result.rows
+            // .filter(row => row.doc.type === 'tempHum')  // Ensure the document type is 'measure'
             .map(row => row.doc);  // Map to get the document content
  
         // Send the meassure as JSON response
-        res.status(200).json(meassures);
+        res.status(200).json(measures);
     } catch (error) {
-        res.status(500).json({ error: 'Failed to retrieve meassure' });
+        res.status(500).json({ error: 'Failed to retrieve measure' });
     }
 });
   
@@ -224,49 +216,55 @@ app.get("/api/v1/meassures/health", (req, res) => {
 
 app.post('/api/v1/meassures', async (req, res) => {
     try {
-        const meassure = req.body; // meassure data from request body
-        const {device_id, type, description, data} = req.body;
+        const measure = req.body; // measure data from request body
+        // const {device_id, temperature, humidity} = req.body;
+        const {device_id, type, data} = req.body;
+        // measure.type = "tempHum" // crear un usuario, tipo usuario measure (como una tabla measure)
+        measure.date = new Date().toLocaleString("es-ES", { timeZone: "Europe/Madrid" });
+
         
         // Insert new meassure into the database
-        // const response = await db.post(meassure);
+        const response = await db.post(measure);
 
         // Check if device is in devices table
         const selector = {
             $and: [
-                {type: "devices"},
+                // {type: "devices"},
                 {deviceMAC: device_id}
             ]
         }
         const deviceExist = await db.find({
             selector,
-            fields: ['_id', '_rev', 'deviceMAC', 'type', 'description', 'data', 'date'], // add ALLWAYS _id AND _rev otherwise, doen't update
+            fields: ['_id', '_rev', 'type', 'deviceMAC', 'data'], // add ALLWAYS _id AND _rev otherwise, doen't update
             // limit: 10
         })
         // Either if exist or not one device, it will be updated/created with last temp. and humid. registry
-        if (deviceExist.docs.length !== 0){
-            // if device exist, update new fields data with last registry
-            console.log(`EXISTE ${device_id}, actualizando registro con nuevos datos`)
+        if (deviceExist.docs.length !== 0) {
+            // if device exist, update temp and humid with last registry
+            console.log("EXISTE")
             const existingDevice = deviceExist.docs[0];
             const updatedDevice = {
                 _id: existingDevice._id,
                 _rev: existingDevice._rev, // compulsory to update in PouchDB
-                deviceMAC: device_id,
+                // type: "devices",
                 type,
-                description,
-                data,
-                date: new Date().toLocaleString("es-ES", { timeZone: "Europe/Madrid" })
+                deviceMAC: device_id,
+                data
+                // temperature,
+                // humidity
             };
             await db.put(updatedDevice);
             
         } else {
             // if not exist, a new deviced is created with temp. and humid.
-            console.log(`NO EXISTE ${device_id} !! Creando registro nuevo`)  // deviceExist.docs will be [] (empty)
+            console.log("NO EXISTE, dispositivo nuevo !!")  // deviceExist.docs will be [] (empty)
             let device = {
+                // type: "devices", // crear un dispositivo, tipo dispositivo "devices" (como una tabla devices)
+                type, // crear un dispositivo, tipo dispositivo "devices" (como una tabla devices)
                 deviceMAC: device_id,
-                type, 
-                description,
-                data,
-                date: new Date().toLocaleString("es-ES", { timeZone: "Europe/Madrid" })
+                data
+                // temperature: temperature,
+                // humidity: humidity
             }
             // Insert new device into the database
             const response = await db.post(device);
@@ -277,62 +275,62 @@ app.post('/api/v1/meassures', async (req, res) => {
         // Respond with success
         res.status(201).json({ id: response.id, ...meassure });
     } catch (error) {
-        res.status(500).json({ error: 'Failed to add meassure' });
+        res.status(500).json({ error: 'Failed to add measure' });
     }
 });
 
-// app.delete('/api/v1/meassures/:id', async (req, res) => {
+app.delete('/api/v1/meassures/:id', async (req, res) => {
 
-//     const {id} = req.params
-//     try {
-//         const meassure = await db.get(id)   // getting document (meassure)
-//         await db.remove(meassure)   // deleting document
-//         res.status(200).json({message: "Deleted OK"})
+    const {id} = req.params
+    try {
+        const meassure = await db.get(id)   // getting document (meassure)
+        await db.remove(meassure)   // deleting document
+        res.status(200).json({message: "Deleted OK"})
 
-//     } catch (error) {
-//         res.status(500).json({ error: 'Failed to delete meassure' });
-//     }
-// });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to delete meassure' });
+    }
+});
 
-// app.get('/api/v1/meassures/:id', async (req, res) => {
+app.get('/api/v1/meassures/:id', async (req, res) => {
 
-//     const {id} = req.params
-//     try {
-//         const meassure = await db.get(id)   // getting document (meassure)
-//         res.status(200).json({ ...meassure})
+    const {id} = req.params
+    try {
+        const meassure = await db.get(id)   // getting document (meassure)
+        res.status(200).json({ ...meassure})
 
-//     } catch (error) {
-//         res.status(500).json({ error: "Failed to get, Id not found" });
-//     }
-// });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to get, Id not found" });
+    }
+});
 
-// app.put('/api/v1/meassures/:id', async (req, res) => {
-//     try {
-//         const { id } = req.params;  // Get the meassure ID from the URL
-//         const updatedmeassure = req.body;  // The updated meassure data from the request body
+app.put('/api/v1/meassures/:id', async (req, res) => {
+    try {
+        const { id } = req.params;  // Get the meassure ID from the URL
+        const updatedmeassure = req.body;  // The updated meassure data from the request body
 
-//         // Fetch the current meassure data using the ID
-//         const existingmeassure = await db.get(id);
+        // Fetch the current meassure data using the ID
+        const existingmeassure = await db.get(id);
         
-//         // Update the existing meassure's data with the new data
-//         const updatedDoc = {
-//             ...existingmeassure,
-//             ...updatedmeassure, // This will overwrite any matching fields
-//         };
+        // Update the existing meassure's data with the new data
+        const updatedDoc = {
+            ...existingmeassure,
+            ...updatedmeassure, // This will overwrite any matching fields
+        };
 
-//         // Save the updated document back to the database
-//         const response = await db.put(updatedDoc);
+        // Save the updated document back to the database
+        const response = await db.put(updatedDoc);
 
-//         // Send back the updated meassure data
-//         res.status(200).json({
-//             id: response.id,
-//             rev: response.rev,
-//             ...updatedmeassure,  // The updated fields from the request
-//         });
-//     } catch (error) {
-//         res.status(500).json({ error: 'Failed to update meassure' });
-//     }
-// });
+        // Send back the updated meassure data
+        res.status(200).json({
+            id: response.id,
+            rev: response.rev,
+            ...updatedmeassure,  // The updated fields from the request
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to update meassure' });
+    }
+});
 
 // ********** meassure end ***************
 //*****************************************
